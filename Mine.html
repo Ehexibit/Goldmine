@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Minesweeper Game</title>
+	<style>
+		#status{
+			text-align: center;
+			display: flex;
+			align-items: center;
+			margin: auto;
+			font-weight: bold;
+			font-family: Arial;
+			color: lightgrey;
+		}
+		.marked{
+			background-color: red;
+			background-image: url('warning2.gif');
+			background-size: cover;
+		}
+		#goldcoin{
+			text-align: center;
+			display: flex;
+			align-items: center;
+			margin: auto;
+			font-weight: bold;
+			font-family: Arial;
+			color: lightgrey;
+		}
+		#celltopop{
+			text-align: center;
+			display: flex;
+			align-items: center;
+			margin: auto;
+			font-weight: bold;
+			font-family: Arial;
+			color: lightgrey;	
+		}
+		#restartbutton{
+			text-align: center;
+			display: flex;
+			align-items: center;
+			margin: auto;
+			font-weight: bold;
+			font-family: Arial;
+			color: lightgrey;
+		}
+		.footer{
+			display: flex;
+			width: 318px;
+			height: 70px;
+			background-color: #444;
+			margin: auto;
+			border-bottom-left-radius: 10px;
+			border-bottom-right-radius: 10px;
+			cursor: pointer;
+		}
+		.header{
+			display: flex;
+			width: 318px;
+			height: 50px;
+			background-color: #444;
+			margin: auto;
+			
+		}
+		.container{
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: space-between;
+			align-items: center;
+			height: 100vh;
+			padding: 20px;
+			box-sizing: border-box;
+		}
+		.leftcontainer{
+			flex: 1 1 15%;
+			background-color: #f2f2f2;
+			height: 100%;
+		}
+		.cellcontainer {
+			display: grid;
+			grid-template-columns: repeat(var(--cols),1fr);
+			grid-template-row: repeat(var(--rows),1fr);
+			gap: 1px;
+			padding: 0.5em;
+			background-color: #444;
+			width: 300px;
+			height: 300px;
+			margin: auto;
+			
+			
+		}
+		.rightcontainer{
+			flex: 1 1 25%;
+			background-color: #f2f2f2;
+			height: 100%;
+		}
+		.gamecontainer{
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			//justify-content: center;
+			
+		}
+		.cell {
+			display: flex;
+			box-sizing: border-box;
+			justify-content: center;
+			width: calc(100% / var(--cols) - 2px);
+			height: calc(100% / var(--rows) - 2px);
+			border: 1px solid #ccc;
+			background-color: #ddd;
+			align-items: center;
+			font-size: 1.3em;
+			cursor: pointer;
+			padding: 1em;
+			margin: auto;
+			border-radius: 1px;
+		}
+		//.cell.hidden:hover {
+		//	background-color: #9c9c9c;
+  		//}
+		
+
+		.cell.hidden {
+			background-color: grey;
+		}
+		.cell.mineclue{
+			background-color: lightgrey;
+			background-image: url('warning.gif');
+			background-size: cover;
+		}
+		.cell.mine {
+			background-color: white;
+			/*
+			background-image: url('https://w7.pngwing.com/pngs/220/369/png-transparent-minesweeper-pro-classic-mine-sweeper-minesweeper-plus-likeminesweeper-bomb-game-computer-wallpaper-video-game-thumbnail.png');
+			*/
+			background-image: url('mines.png');
+			background-size: cover;
+		}
+		.cell.coins {
+			background-color: white;
+			background-image: url('coinsp.gif');
+			background-size: cover;
+		}
+
+	</style>
+</head>
+<body><div class="container">
+		<div class="leftcontainer"></div>
+			<div class="gamecontainer" id="gameboard">
+				<div class="header">
+					<div id="goldcoin"></div>
+					<div id="status">GAME ON</div>
+					<div id="celltopop"></div>
+				</div>
+				<div class="cellcontainer"></div>
+				<div class="footer"><div id="restartbutton">Restart</div>
+			</div>
+			
+		</div><div class="rightcontainer"></div>	
+	</div>
+	<script>
+	// Define the game board size and number of mines
+	const rows = 6;
+	const cols = 6;
+	const mines = 4;
+	const coins = 10;
+	var revealed = 32;
+	var gold = 0;
+	
+
+	// Create an empty game board array
+	let board = [];
+
+	// Generate the game board
+	function generateBoard() {
+		revealed = 32;
+		gold = 0;
+		
+		// Create an empty container for the game board
+		const container = document.querySelector('.cellcontainer');
+		container.innerHTML = '';
+		container.style.setProperty('--cols',cols);
+		document.getElementById("status").textContent = "Game On";
+		document.getElementById("goldcoin").textContent = gold;
+		document.getElementById("celltopop").textContent = revealed;
+		// Generate the cells for the game board
+		
+		for (let row = 0; row < rows; row++) {
+			board[row] = [];
+			for (let col = 0; col < cols; col++) {
+				const cell = document.createElement('div');
+				cell.classList.add('cell', 'hidden');
+				cell.setAttribute('data-row', row);
+				cell.setAttribute('data-col', col);
+				container.appendChild(cell);
+
+				// Add click events to each cell
+				
+				cell.addEventListener('click', () => revealCell(cell));
+				cell.addEventListener('contextmenu', (event) => markCell(cell, event));
+			}
+		}
+
+		// Add mines to the game board
+		for (let i = 0; i < mines; i++) {
+			let row, col;
+			do {
+				row = Math.floor(Math.random() * rows);
+				col = Math.floor(Math.random() * cols);
+			} while (board[row][col]?.isMine); //If already set as mine then do random to make a new you can add gold treasure let say there is 3 gold treasure to find we will make it like this with AND condition
+			board[row][col] = { isMine: true };
+			
+		}
+		for (let i = 0; i < coins; i++){
+			do {
+				row = Math.floor(Math.random() * rows);
+				col = Math.floor(Math.random() * cols);
+			} while (board[row][col]?.isMine || board[row][col]?.isCoin);
+			board[row][col] = { isCoin: true };
+		}
+		for(let row = 0; row < rows; row++){
+			for(let col = 0; col < cols; col++){
+
+				const above = board[row-1]?.[col];
+				const below = board[row+1]?.[col];
+				const left = board[row]?.[col-1];
+				const right = board[row]?.[col+1];
+				const cornerBL = board[row-1]?.[col-1];
+				const cornerBR = board[row+1]?.[col+1];
+				const cornerTL = board[row+1]?.[col-1];
+				const cornerTR = board[row-1]?.[col+1];
+				
+
+				if(!board[row][col]?.isMine && !board[row][col]?.isCoin){
+
+					if( above?.isMine || below?.isMine || left?.isMine || right?.isMine || cornerBL?.isMine || cornerBR?.isMine || cornerTL?.isMine || cornerTR?.isMine){
+						board[row][col] = { isMineClue: true};
+					}
+				}
+
+			}
+		}
+	}
+
+	// Initialize the game board
+	generateBoard();
+
+	// Function to reveal a cell when clicked
+	function revealCell(cell) {
+		const row = parseInt(cell.getAttribute('data-row'));
+		const col = parseInt(cell.getAttribute('data-col'));
+		
+		if(!board[row][col]?.isRevealed){
+			revealed--;
+		}
+		if(cell.classList.contains('marked')) return;
+		if (board[row][col]?.isMine) {
+
+			cell.classList.add('mine');
+			board[row][col] = { isRevealed: true};
+			document.getElementById("status").textContent = "Game Over"; revealAllcell(); return;
+			
+
+		} else if(board[row][col]?.isCoin){
+
+			cell.classList.add('coins');
+			gold++;
+			document.getElementById("goldcoin").textContent = gold;
+			document.getElementById("celltopop").textContent = revealed;
+			board[row][col] = { isRevealed: true};
+
+		} else if (board[row][col]?.isMineClue){
+				
+			cell.classList.add('mineclue');
+			board[row][col] = { isRevealed: true};
+			document.getElementById("celltopop").textContent = revealed;
+			board[row][col] = { isRevealed: true};
+
+		} else {
+
+			cell.classList.remove('hidden');
+			document.getElementById("celltopop").textContent = revealed;
+			board[row][col] = { isRevealed: true};
+		}
+		if(revealed == 0){
+			win();
+			gameover = true;
+		}
+		
+	}
+	
+	// Function to mark a cell as a mine when right-clicked
+	function markCell(cell, event) {
+		event.preventDefault();
+		const row = parseInt(cell.getAttribute('data-row'));
+		const col = parseInt(cell.getAttribute('data-col'));
+		if(board[row][col]?.isRevealed) return;
+		cell.classList.toggle('marked');
+		console.log("Right Clicked!");
+	}
+		
+	function revealAllcell(){
+		const cells = document.querySelectorAll('.cell');
+		
+		cells.forEach((cell, index) =>{
+
+			
+			row = parseInt(cell.getAttribute('data-row'));
+			col = parseInt(cell.getAttribute('data-col'));
+
+			
+
+			if (board[row][col]?.isMine){
+				cell.classList.add('mine');
+			} else if (board[row][col]?.isCoin){
+				cell.classList.add('coins');
+			} else if (board[row][col]?.isMineClue){
+				cell.classList.add('mineclue');
+			} else {
+				cell.classList.remove('hidden');
+				cell.classList.remove('marked');
+			}
+			board[row][col] = { isRevealed: true };
+			console.log("Game Over and reveal all");
+			
+		});
+		document.getElementById("celltopop").textContent = revealed;
+		
+	}
+	function win(){
+		document.getElementById("status").textContent = "You Won!";
+		revealAllcell();
+	}
+	const restart = document.querySelector('.footer');
+		 restart.addEventListener('click', () => generateBoard());
+
+
+
+	
+</script>
+	
+
+</body>
+</html>
